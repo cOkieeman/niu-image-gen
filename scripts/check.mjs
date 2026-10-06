@@ -51,7 +51,7 @@ assert.ok(skill.includes('220s') && skill.includes('250s'), 'Timeout documentati
 const help = spawnSync(process.execPath, [resolve(root, 'scripts/generate.mjs'), '--help'], { encoding: 'utf8', timeout: 10000 });
 assert.equal(help.error, undefined);
 assert.equal(help.status, 0, help.stderr);
-for (const flag of ['--prompt', '--batch', '--edit', '--get-config']) {
+for (const flag of ['--prompt', '--batch', '--edit', '--get-config', '--model']) {
   assert.ok(help.stdout.includes(flag), `Missing CLI help: ${flag}`);
 }
 console.log(`Validated Niu Image Gen ${portable.version}: manifests, marketplace, assets, skill paths and CLI help.`);

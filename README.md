@@ -12,7 +12,7 @@
 
 Niu 支持 1K / 2K / 4K，比例为正方形 / 横版 / 竖版；快速模式与批量模式分别保存默认参数。Gemini 由同一套 Momo 技能按触发词选择 Flash / Pro。
 
-独立维护版为 **1.1.1**，Niu 基于上游 **1.1.0**，Gemini 来自本机已有 Momo 技能，两套运行脚本均保持原样。来源和更新时间见 [UPSTREAM.md](UPSTREAM.md)，独立改动见 [CHANGELOG.md](CHANGELOG.md)。
+独立维护版为 **1.1.2**，Niu 基于上游 **1.1.0**，新增模型选择并修正图片编辑接口；Gemini 来自本机已有 Momo 技能。来源和更新时间见 [UPSTREAM.md](UPSTREAM.md)，独立改动见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 安装为 Codex 插件
 
@@ -54,14 +54,20 @@ node scripts/generate.mjs --set-batch-mode --quality 2K --ratio landscape --conc
 
 ```powershell
 node scripts/generate.mjs --prompt '一只赛博朋克风格的猫'
+node scripts/generate.mjs --model gpt-image-2.5 --prompt '一只橘猫' --quality 1K --count 1
 node scripts/generate.mjs --prompt '水墨山水' --quality 4K --ratio landscape --count 2
 node scripts/generate.mjs --batch-inline '雪山日出' '雨夜街头' --concurrency 2
 node scripts/generate.mjs --edit --image 'C:\Images\cat.png' --prompt '把背景换成海边'
+node scripts/generate.mjs --model gpt-image-2.5 --edit --image 'C:\Images\cat.png' --prompt '加一条蓝色围巾'
 node scripts/generate.mjs --edit --image 'C:\Images\cat.png' --prompt '改成水彩风格' --count 2
 node scripts/generate.mjs --edit --image 'C:\Images\a.png' --image 'C:\Images\b.png' --prompt '换成纯白背景'
 ```
 
 批量文件使用 JSON 字符串数组，可通过 `--batch prompts.json` 传入。显式参数优先于已保存的模式配置，后者优先于脚本默认值。`--output-dir` 可指定输出目录。
+
+`--model` 适用于所有生成和编辑模式，默认仍为 `gpt-image-2-x`。在聊天里说“用 image2.5 画……”或“用 image2.5 改……”会选择 `gpt-image-2.5`。
+
+2026-10-06 的服务实测中，`gpt-image-2-x` 与 `gpt-image-2.5` 均成功生成 1024×1024 图片，2.5 也通过独立编辑接口返回图片。服务商模型列表还包含 `gpt-image-2.5-flare` / `gpt-image-2.5-sunburst`，可通过 `--model` 指定，但本次未实测这两个变体。实时可用性仍以服务返回为准。
 
 ## Gemini Flash / Pro
 
@@ -88,7 +94,7 @@ Gemini 密钥读取优先级为 `IIIIITOKEN_API_KEY` → `API_KEY` → 已有 Ni
 
 ## 服务与本地文件
 
-- 该插件调用第三方服务 `https://api.iiiiitoken.com/v1/images/generations`，模型为 `gpt-image-2-x`。
+- 该插件调用第三方服务：文字生图为 `https://api.iiiiitoken.com/v1/images/generations`（JSON），图片编辑为 `https://api.iiiiitoken.com/v1/images/edits`（multipart）。默认模型为 `gpt-image-2-x`，可显式选择 `gpt-image-2.5`。
 - 请求携带 API Key 与提示词；编辑请求还携带源图片数据。
 - 配置与密钥保存于用户主目录的 `.codex/niu-image-gen-config.json`；图片默认保存于 `Pictures/niu-image-gen/`。
 - 仓库只包含插件与维护文件，不包含个人配置、密钥或生成图片。
@@ -104,7 +110,7 @@ npm run check
 git log --oneline
 ```
 
-检查覆盖 JavaScript 语法、插件清单一致性、资源路径、marketplace 指向、两套 CLI 帮助和 Gemini 模型路由 / 编辑载荷 / 图片解码。不会调用生图服务或读写个人配置。GitHub Actions 在 Windows 和 Linux 执行相同检查。
+检查覆盖 JavaScript 语法、插件清单一致性、资源路径、marketplace 指向、两套 CLI 帮助、Niu 全流程模型传递 / multipart 编辑以及 Gemini 模型路由 / 编辑载荷 / 图片解码。不会调用生图服务或读写个人配置。GitHub Actions 在 Windows 和 Linux 执行相同检查。
 
 若 Python 命令不叫 `python`，运行前设置 `NIU_PYTHON` 为 Python 可执行文件的绝对路径。
 

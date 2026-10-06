@@ -1,10 +1,14 @@
 #!/usr/bin/env node
 
+// Standalone 1.1.2: model selection and multipart editing added by cOkieeman.
+// Original BORAWONG plugin source and license are documented in NOTICE.
+
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, dirname, basename } from "node:path";
 import { homedir } from "node:os";
 
 const API_BASE = "https://api.iiiiitoken.com/v1/images/generations";
+const EDIT_API_BASE = "https://api.iiiiitoken.com/v1/images/edits";
 const MODEL = "gpt-image-2-x";
 const CONFIG_PATH = join(homedir(), ".codex", "niu-image-gen-config.json");
 
@@ -58,7 +62,7 @@ function resolveOutputDir(userDir) {
   return dir;
 }
 
-async function generate(apiKey, prompt, size, outputDir) {
+async function generate(apiKey, prompt, size, outputDir, model = MODEL) {
   const start = Date.now();
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 220_000);
@@ -67,7 +71,7 @@ async function generate(apiKey, prompt, size, outputDir) {
     const res = await fetch(API_BASE, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model: MODEL, prompt, n: 1, size }),
+      body: JSON.stringify({ model, prompt, n: 1, size }),
       signal: controller.signal,
     });
     clearTimeout(timeout);
@@ -96,7 +100,7 @@ async function generate(apiKey, prompt, size, outputDir) {
   }
 }
 
-async function editImage(apiKey, imagePath, prompt, size, outputDir, count = 1, silent = false) {
+async function editImage(apiKey, imagePath, prompt, size, outputDir, count = 1, silent = false, model = MODEL) {
   if (!existsSync(imagePath)) {
     return { ok: false, elapsed: 0, error: `文件不存在: ${imagePath}`, sourceName: basename(imagePath) };
   }
@@ -104,8 +108,13 @@ async function editImage(apiKey, imagePath, prompt, size, outputDir, count = 1, 
   const imageData = readFileSync(imagePath);
   const lp = imagePath.toLowerCase();
   const ext = lp.endsWith(".jpg") || lp.endsWith(".jpeg") ? "jpeg" : lp.endsWith(".webp") ? "webp" : "png";
-  const dataUrl = `data:image/${ext};base64,${imageData.toString("base64")}`;
   const sourceName = basename(imagePath);
+  const form = new FormData();
+  form.set("model", model);
+  form.set("prompt", prompt);
+  form.set("n", String(count));
+  form.set("size", size);
+  form.set("image", new Blob([imageData], { type: `image/${ext}` }), sourceName);
 
   if (!silent) {
     console.log(`🖼️ 加载 ${sourceName} (${(imageData.length / 1024 / 1024).toFixed(2)}MB)...`);
@@ -117,10 +126,10 @@ async function editImage(apiKey, imagePath, prompt, size, outputDir, count = 1, 
   const timeout = setTimeout(() => controller.abort(), 250_000);
 
   try {
-    const res = await fetch(API_BASE, {
+    const res = await fetch(EDIT_API_BASE, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model: MODEL, prompt, n: count, size, image: dataUrl }),
+      headers: { Authorization: `Bearer ${apiKey}` },
+      body: form,
       signal: controller.signal,
     });
     clearTimeout(timeout);
@@ -166,7 +175,7 @@ async function editImage(apiKey, imagePath, prompt, size, outputDir, count = 1, 
   }
 }
 
-async function runBatchEdit(apiKey, imagePaths, prompt, size, concurrency, outputDir) {
+async function runBatchEdit(apiKey, imagePaths, prompt, size, concurrency, outputDir, model = MODEL) {
   const total = imagePaths.length;
   console.log(`\n✏️ 批量编辑 ${total} 张\n`);
 
@@ -179,7 +188,7 @@ async function runBatchEdit(apiKey, imagePaths, prompt, size, concurrency, outpu
       const idx = nextIdx++;
       const imagePath = imagePaths[idx];
       console.log(`⏳ [${idx + 1}/${total}] ${basename(imagePath)}`);
-      const result = await editImage(apiKey, imagePath, prompt, size, outputDir, 1, true);
+      const result = await editImage(apiKey, imagePath, prompt, size, outputDir, 1, true, model);
       results[idx] = result;
       if (result.ok) {
         console.log(`✅ [${idx + 1}/${total}] ${(result.elapsed / 1000).toFixed(1)}s`);
@@ -208,7 +217,7 @@ async function runBatchEdit(apiKey, imagePaths, prompt, size, concurrency, outpu
   return fail.length > 0 ? 1 : 0;
 }
 
-async function batchGenerate(apiKey, prompts, size, concurrency, outputDir, isVariation = false) {
+async function batchGenerate(apiKey, prompts, size, concurrency, outputDir, isVariation = false, model = MODEL) {
   const total = prompts.length;
   const results = new Array(total);
   let nextIdx = 0;
@@ -222,7 +231,7 @@ async function batchGenerate(apiKey, prompts, size, concurrency, outputDir, isVa
       } else {
         console.log(`[${idx + 1}/${total}] 生成中: "${prompt.slice(0, 30)}${prompt.length > 30 ? "..." : ""}"`);
       }
-      const result = await generate(apiKey, prompt, size, outputDir);
+      const result = await generate(apiKey, prompt, size, outputDir, model);
       results[idx] = { prompt, ...result };
       if (result.ok) {
         console.log(`✅ [${idx + 1}/${total}] ${(result.elapsed / 1000).toFixed(1)}s`);
@@ -236,13 +245,13 @@ async function batchGenerate(apiKey, prompts, size, concurrency, outputDir, isVa
   return results;
 }
 
-async function runBatch(apiKey, prompts, size, concurrency, outputDir, isVariation = false) {
+async function runBatch(apiKey, prompts, size, concurrency, outputDir, isVariation = false, model = MODEL) {
   if (!isVariation) {
     console.log(`\n📦 批量 ${prompts.length} 张\n`);
   }
 
   const startAll = Date.now();
-  const results = await batchGenerate(apiKey, prompts, size, concurrency, outputDir, isVariation);
+  const results = await batchGenerate(apiKey, prompts, size, concurrency, outputDir, isVariation, model);
   const totalTime = Date.now() - startAll;
 
   const ok = results.filter((r) => r.ok);
@@ -293,6 +302,9 @@ EDIT:
   --edit --image <p1> --image <p2> --prompt "..."  [--concurrency N]
 
 Explicit flags override saved config. Without flags, saved mode config is used.
+--model M selects the model for all generation and edit modes (default: gpt-image-2-x).
+Example: --model gpt-image-2.5 --prompt "a cat" --quality 1K
+Editing uploads the source image to /v1/images/edits as multipart form data.
 
 SIZE MATRIX:
   ┌─────────┬────────────┬────────────┬────────────┐
@@ -316,6 +328,7 @@ function parseArgs(argv) {
     else if (a === "--prompt" && argv[i + 1])         args.prompts.push(argv[++i]);
     else if (a === "--quality" && argv[i + 1])        args.flags.quality = argv[++i];
     else if (a === "--ratio" && argv[i + 1])          args.flags.ratio = argv[++i];
+    else if (a === "--model" && argv[i + 1])          args.flags.model = argv[++i];
     else if (a === "--count" && argv[i + 1])          args.flags.count = parseInt(argv[++i], 10);
     else if (a === "--output-dir" && argv[i + 1])     args.flags.outputDir = argv[++i];
     else if (a === "--concurrency" && argv[i + 1])    args.flags.concurrency = parseInt(argv[++i], 10);
@@ -336,6 +349,7 @@ function parseArgs(argv) {
 
 async function main() {
   const { prompts, flags } = parseArgs(process.argv.slice(2));
+  const model = flags.model || MODEL;
 
   // ── Config commands (no API key needed) ──
 
@@ -432,13 +446,13 @@ async function main() {
     if (images.length > 1) {
       const bm = cfg?.batchMode;
       const concurrency = Math.max(1, Math.min(flags.concurrency ?? bm?.concurrency ?? DEFAULTS.concurrency, 10));
-      process.exit(await runBatchEdit(apiKey, images, prompts[0], size, concurrency, outputDir));
+      process.exit(await runBatchEdit(apiKey, images, prompts[0], size, concurrency, outputDir, model));
     }
 
     const count = Math.max(1, Math.min(flags.count ?? 1, 4));
 
     if (count > 1) {
-      const result = await editImage(apiKey, images[0], prompts[0], size, outputDir, count);
+      const result = await editImage(apiKey, images[0], prompts[0], size, outputDir, count, false, model);
       if (result.ok) {
         const NUM = ["①", "②", "③", "④"];
         const totalMB = result.results.reduce((sum, r) => sum + parseFloat(r.fileSize), 0).toFixed(2);
@@ -454,7 +468,7 @@ async function main() {
       process.exit(0);
     }
 
-    const result = await editImage(apiKey, images[0], prompts[0], size, outputDir);
+    const result = await editImage(apiKey, images[0], prompts[0], size, outputDir, 1, false, model);
     if (result.ok) {
       console.log(`✏️ "${prompts[0]}"\n\n✅ ${(result.elapsed / 1000).toFixed(1)}s ｜ ${result.fileSize}\n📍 ${result.path}\n🖼️ 原图: ${result.sourceName}`);
     } else {
@@ -501,14 +515,14 @@ async function main() {
       console.error("ERROR: Batch file must be a JSON array of prompt strings.");
       process.exit(1);
     }
-    process.exit(await runBatch(apiKey, bp, size, concurrency, outputDir));
+    process.exit(await runBatch(apiKey, bp, size, concurrency, outputDir, false, model));
   }
 
   // Batch inline
   if (flags.batchInline && prompts.length >= 1) {
     const bm = cfg?.batchMode;
     const concurrency = Math.max(1, Math.min(flags.concurrency ?? bm?.concurrency ?? DEFAULTS.concurrency, 10));
-    process.exit(await runBatch(apiKey, prompts, size, concurrency, outputDir));
+    process.exit(await runBatch(apiKey, prompts, size, concurrency, outputDir, false, model));
   }
 
   // Single prompt — resolve count from flag → quickMode config → default
@@ -518,13 +532,13 @@ async function main() {
 
   if (count > 1) {
     console.log();
-    process.exit(await runBatch(apiKey, Array(count).fill(prompt), size, Math.min(count, 4), outputDir, true));
+    process.exit(await runBatch(apiKey, Array(count).fill(prompt), size, Math.min(count, 4), outputDir, true, model));
   }
 
   // Single image
   console.log(`\n⏳ 生成中...\n`);
 
-  const result = await generate(apiKey, prompt, size, outputDir);
+  const result = await generate(apiKey, prompt, size, outputDir, model);
   if (result.ok) {
     console.log(`🎨 "${prompt}"\n\n✅ ${(result.elapsed / 1000).toFixed(1)}s ｜ ${result.fileSize}\n📍 ${result.path}`);
   } else {

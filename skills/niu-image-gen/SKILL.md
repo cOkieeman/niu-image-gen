@@ -24,7 +24,26 @@ SCRIPT="<absolute-plugin-root>/scripts/generate.mjs"
 ```
 
 Standalone distribution modifications: corrected script lookup and timeout
-documentation; model requests and output behavior are inherited from upstream.
+documentation; version 1.1.2 adds model selection and correct multipart editing.
+
+## Model selection
+
+The default remains `gpt-image-2-x`. When the user requests `image2.5`, `image 2.5`,
+`GPT Image 2.5` or `gpt-image-2.5`, pass `--model gpt-image-2.5` to the script in
+whichever generation or edit mode is used. Preserve an explicitly requested full
+model ID, including `gpt-image-2.5-flare` or `gpt-image-2.5-sunburst`, with `--model`.
+The latter two are provider-listed variants; this release only live-tested the
+base `gpt-image-2.5`. Do not substitute another model after a failure.
+
+Examples:
+
+```bash
+node "$SCRIPT" --model gpt-image-2.5 --prompt "a cat" --quality 1K --count 1
+node "$SCRIPT" --model gpt-image-2.5 --edit --image "<source-image>" --prompt "add a blue scarf"
+```
+
+Text generation uses `/v1/images/generations`; edits use `/v1/images/edits`
+with multipart image upload. The script sets the appropriate format automatically.
 
 ---
 
@@ -454,7 +473,7 @@ These rules apply to ALL branches:
 
 ## Hard constraints
 
-- API base URL (`https://api.iiiiitoken.com/v1/images/generations`) and model (`gpt-image-2-x`) are hardcoded. **Never change them.**
+- Keep generation at `https://api.iiiiitoken.com/v1/images/generations` and editing at `https://api.iiiiitoken.com/v1/images/edits`. Default to `gpt-image-2-x`; use `--model` for the user's explicit model selection.
 - **Never display the user's full API key in chat.**
 - Maximum batch size: 20 prompts per run.
 - Maximum concurrency: 10.
