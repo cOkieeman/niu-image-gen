@@ -1,6 +1,6 @@
 ---
 name: "niu-image-gen"
-description: "Generate or edit images using the Niu Image Gen plugin. Trigger when the user wants to create, draw, generate, or edit images via Niu Image Gen, wants batch image generation, needs AI-generated images saved to disk, or wants to modify an existing image (change background, remove object, change style, etc.). Do not use for the built-in image_gen tool or SVG/vector work."
+description: "Generate or edit images with the Niu GPT Image workflow, including quick and batch generation and editing. Use for Niu or GPT Image requests. Requests starting with 么么哒 / 么么哒pro and their 改 variants use the bundled momo-image-gen skill instead. Do not use for the built-in image_gen tool or SVG/vector work."
 ---
 
 # Niu Image Gen 🎨
@@ -9,9 +9,22 @@ AI image generation with persistent config, zero-confirmation quick mode, and ba
 
 ## Script location
 
+Resolve the plugin root from this skill file: it is two directories above
+`skills/niu-image-gen/SKILL.md`. The script is `<plugin-root>/scripts/generate.mjs`.
+Use the installed copy's actual absolute path; do not assume a fixed home directory.
+
+Set `SCRIPT` to that resolved path in the current shell. Examples:
+
+```powershell
+$SCRIPT = '<absolute-plugin-root>/scripts/generate.mjs'
 ```
-SCRIPT="$HOME/plugins/niu-image-gen/scripts/generate.mjs"
+
+```bash
+SCRIPT="<absolute-plugin-root>/scripts/generate.mjs"
 ```
+
+Standalone distribution modifications: corrected script lookup and timeout
+documentation; model requests and output behavior are inherited from upstream.
 
 ---
 
@@ -436,7 +449,7 @@ These rules apply to ALL branches:
 |-------|--------|
 | 503 "No available compatible accounts" | Wait 30s, retry once. If still fails, tell user the API is temporarily busy. |
 | 400 with size error | Fall back to closest valid size and retry. |
-| Timeout (generation 120s / edit 180s) | Report and offer to retry. |
+| Timeout (generation 220s / edit 250s) | Report and offer to retry. |
 | Missing API key | Guide through `--set-key` setup (Branch A W1). |
 
 ## Hard constraints
@@ -447,5 +460,5 @@ These rules apply to ALL branches:
 - Maximum concurrency: 10.
 - Maximum count (quick mode / edit variations): 4.
 - Maximum batch edit images: 10.
-- Generation timeout: 120s. Edit timeout: 180s.
+- Generation timeout: 220s. Edit timeout: 250s.
 - Pixel budget: ≤8,294,400 px. Longest edge ≤3,840. Dimensions divisible by 16.

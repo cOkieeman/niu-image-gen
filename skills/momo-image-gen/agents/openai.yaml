@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gemini Flash / Pro 生图"
+  short_description: "Generate or edit images with Gemini Flash and Pro"
+  default_prompt: "Use $momo-image-gen to generate an image from the text after the trigger keyword '么么哒'."

@@ -1,16 +1,16 @@
 {
   "name": "niu-image-gen",
-  "version": "1.1.0",
-  "description": "Generate images via third-party API with interactive quality/ratio selection and batch support.",
+  "version": "1.1.1",
+  "description": "Generate and edit images with GPT Image, Gemini Flash and Gemini Pro; includes batch workflows.",
   "author": {
     "name": "BORAWONG"
   },
   "skills": "./skills/",
   "interface": {
     "displayName": "Niu Image Gen",
-    "shortDescription": "AI image generation with batch mode, quality & ratio selection.",
-    "longDescription": "Generate high-quality images using a third-party image generation API. Interactive workflow guides you through quality (1K/2K/4K), aspect ratio (square/landscape/portrait), and batch generation with concurrency control.",
-    "developerName": "BORAWONG",
+    "shortDescription": "GPT Image + Gemini Flash / Pro generation and editing.",
+    "longDescription": "Standalone image toolkit maintained by cOkieeman. Includes the original BORAWONG Niu GPT Image batch workflows and local Momo Gemini Flash / Pro skills with Chinese trigger words.",
+    "developerName": "cOkieeman",
     "category": "Productivity",
     "capabilities": ["Write"],
     "composerIcon": "./assets/logo.png",

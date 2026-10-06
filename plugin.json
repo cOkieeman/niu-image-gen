@@ -1,0 +1,26 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "niu-image-gen",
+  "version": "1.1.1",
+  "description": "Generate and edit images with GPT Image, Gemini Flash and Gemini Pro; includes batch workflows.",
+  "author": { "name": "BORAWONG", "url": "https://github.com/borawong" },
+  "homepage": "https://github.com/cOkieeman/niu-image-gen",
+  "repository": "https://github.com/cOkieeman/niu-image-gen",
+  "license": "Apache-2.0",
+  "keywords": ["image-generation", "image-editing", "gemini", "gpt-image", "codex"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Niu Image Gen",
+        "shortDescription": "GPT Image + Gemini Flash / Pro generation and editing.",
+        "longDescription": "Standalone image toolkit maintained by cOkieeman. Includes the original BORAWONG Niu GPT Image batch workflows and local Momo Gemini Flash / Pro skills with Chinese trigger words.",
+        "developerName": "cOkieeman",
+        "category": "Productivity",
+        "capabilities": ["Write"],
+        "composerIcon": "./assets/logo.png",
+        "logo": "./assets/logo.png",
+        "defaultPrompt": "I want to generate some images"
+      }
+    }
+  }
+}

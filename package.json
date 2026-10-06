@@ -1,0 +1,14 @@
+{
+  "name": "niu-image-gen",
+  "version": "1.1.1",
+  "private": true,
+  "type": "module",
+  "description": "Standalone GPT Image and Gemini Flash / Pro plugin maintained by cOkieeman",
+  "license": "Apache-2.0",
+  "repository": { "type": "git", "url": "https://github.com/cOkieeman/niu-image-gen.git" },
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "check": "node --check scripts/generate.mjs && node --check scripts/check.mjs && node scripts/check.mjs",
+    "help": "node scripts/generate.mjs --help"
+  }
+}

@@ -1,0 +1,20 @@
+Niu Image Gen
+
+Originally developed by BORAWONG in borawong/AiMaMi:
+https://github.com/borawong/AiMaMi/tree/main/plugins/niu-image-gen
+
+This standalone distribution is maintained by cOkieeman:
+https://github.com/cOkieeman/niu-image-gen
+
+The original plugin and its filtered Git history were extracted from
+plugins/niu-image-gen at upstream commit
+add37271e29ba81ee17f15f444a24925af50bb87.
+The last upstream plugin change is
+297c7af56f10fb371b77bc9b6b65aa320afcbe7e (version 1.1.0).
+
+Distribution license: Apache License, Version 2.0. See LICENSE.
+Standalone modifications are described in CHANGELOG.md.
+
+The bundled skills/momo-image-gen directory comes from the user's existing
+local Momo Image Gen skill. It implements the Gemini Flash and Pro routes;
+no separate public upstream repository was identified for that local skill.

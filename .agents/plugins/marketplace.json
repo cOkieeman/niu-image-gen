@@ -1,0 +1,14 @@
+{
+  "name": "niu-image-gen",
+  "interface": {
+    "displayName": "Niu Image Gen · cOkieeman"
+  },
+  "plugins": [
+    {
+      "name": "niu-image-gen",
+      "source": { "source": "local", "path": "./" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_USE" },
+      "category": "Productivity"
+    }
+  ]
+}
